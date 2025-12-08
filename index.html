@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDN Lab - GitHub Pages</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.svg" alt="CDN Lab Logo" class="logo">
+            <h1>🚀 CDN Lab с GitHub Pages</h1>
+            <p class="subtitle">Демонстрация работы CDN через GitHub Pages + Cloudflare</p>
+        </div>
+
+        <div class="info-card">
+            <h2>📊 Информация о подключении</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">Метод доставки:</span>
+                    <span class="value">GitHub Pages CDN</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">CDN Provider:</span>
+                    <span class="value">Fastly ✅</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">SSL/TLS:</span>
+                    <span class="value">Автоматический</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Кэширование:</span>
+                    <span class="value">Активно</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="endpoints-card">
+            <h2>🔗 Доступные ресурсы</h2>
+            <ul class="endpoints-list">
+                <li><code>index.html</code> - Главная страница</li>
+                <li><code>style.css</code> - Стили (кэшируемые)</li>
+                <li><code>image.svg</code> - SVG изображение (кэшируемое)</li>
+                <li><code>logo.svg</code> - Логотип</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Интерактивное тестирование</h2>
+            <div class="button-group">
+                <button onclick="testCache()" class="btn btn-primary">Проверка кэша</button>
+                <button onclick="testPerformance()" class="btn btn-secondary">Производительность</button>
+                <button onclick="testHeaders()" class="btn btn-info">Проверка заголовков</button>
+            </div>
+            <div id="results" class="results-box"></div>
+        </div>
+
+        <div class="image-section">
+            <h2>🖼️ Тестовое изображение (кэшируемое)</h2>
+            <img src="image.svg" alt="Test SVG" class="test-image">
+        </div>
+
+        <footer class="footer">
+            <p>Лабораторная работа по CDN | GitHub Pages Edition</p>
+            <p class="timestamp">Версия: 1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        async function testCache() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="loading">⏳ Проверка кэша...</p>';
+            
+            try {
+                const response = await fetch('style.css', { cache: 'reload' });
+                const cacheControl = response.headers.get('cache-control') || 'N/A';
+                const age = response.headers.get('age') || 'N/A';
+                const etag = response.headers.get('etag') || 'N/A';
+                
+                results.innerHTML = '<div class="result-success">' +
+                    '<h3>✅ Информация о кэше</h3>' +
+                    '<p><strong>Cache-Control:</strong> <code>' + cacheControl + '</code></p>' +
+                    '<p><strong>Age:</strong> ' + age + 's</p>' +
+                    '<p><strong>ETag:</strong> <code>' + etag + '</code></p>' +
+                    '<p class="hint">💡 Обновите страницу несколько раз и проверьте изменение Age</p>' +
+                    '</div>';
+            } catch (e) {
+                results.innerHTML = '<div class="result-error">❌ Ошибка: ' + e.message + '</div>';
+            }
+        }
+
+        async function testPerformance() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="loading">⏳ Измерение производительности...</p>';
+            
+            const tests = [
+                { name: 'Главная страница', url: 'index.html' },
+                { name: 'CSS (кэшируемый)', url: 'style.css' },
+                { name: 'SVG (кэшируемый)', url: 'image.svg' },
+                { name: 'Логотип', url: 'logo.svg' }
+            ];
+            
+            let html = '<div class="result-success"><h3>📊 Результаты тестов</h3><table>';
+            
+            for (const test of tests) {
+                const start = performance.now();
+                await fetch(test.url);
+                const duration = (performance.now() - start).toFixed(2);
+                html += '<tr><td>' + test.name + '</td><td><strong>' + duration + 'ms</strong></td></tr>';
+            }
+            
+            html += '</table></div>';
+            results.innerHTML = html;
+        }
+
+        async function testHeaders() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="loading">⏳ Проверка заголовков...</p>';
+            
+            try {
+                const response = await fetch('style.css');
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                
+                let html = '<div class="result-success"><h3>📋 HTTP Заголовки</h3><table>';
+                for (const [key, value] of Object.entries(headers)) {
+                    html += '<tr><td><strong>' + key + ':</strong></td><td>' + value + '</td></tr>';
+                }
+                html += '</table></div>';
+                results.innerHTML = html;
+            } catch (e) {
+                results.innerHTML = '<div class="result-error">❌ Ошибка: ' + e.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>
