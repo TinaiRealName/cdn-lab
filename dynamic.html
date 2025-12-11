@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Content Test - CDN Lab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Тест динамического контента</h1>
+            <p class="subtitle">Анализ производительности динамических запросов</p>
+        </div>
+
+        <div class="test-section">
+            <h2>Тестирование API</h2>
+            <p>Этот тест делает запросы к публичному API и измеряет производительность.</p>
+            
+            <div class="button-group">
+                <button onclick="testStaticContent()" class="btn btn-primary">Статический контент (CDN)</button>
+                <button onclick="testDynamicAPI()" class="btn btn-secondary">Динамический API</button>
+                <button onclick="comparePerformance()" class="btn btn-info">Сравнить всё</button>
+            </div>
+            
+            <div id="results" class="results-box"></div>
+        </div>
+
+        <div class="info-card">
+            <h2>Что мы тестируем?</h2>
+            <ul class="endpoints-list">
+                <li><strong>Статический контент:</strong> CSS файл с вашего CDN (кэшируется)</li>
+                <li><strong>Динамический API:</strong> Запрос к внешнему API (не кэшируется)</li>
+                <li><strong>Цель:</strong> Увидеть разницу в скорости доставки</li>
+            </ul>
+        </div>
+
+        <footer class="footer">
+            <p><a href="index.html">← Вернуться на главную</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Тест статического контента (через CDN)
+        async function testStaticContent() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="loading">Тестирование статического контента...</p>';
+            
+            const iterations = 10;
+            const times = [];
+            
+            for (let i = 0; i < iterations; i++) {
+                const start = performance.now();
+                await fetch('style.css', { cache: 'reload' });
+                const duration = performance.now() - start;
+                times.push(duration);
+            }
+            
+            const avg = times.reduce((a, b) => a + b) / times.length;
+            const min = Math.min(...times);
+            const max = Math.max(...times);
+            
+            results.innerHTML = '<div class="result-success">' +
+                '<h3>Статический контент (CDN)</h3>' +
+                '<p><strong>Запросов:</strong> ' + iterations + '</p>' +
+                '<p><strong>Среднее время:</strong> ' + avg.toFixed(2) + 'ms</p>' +
+                '<p><strong>Минимум:</strong> ' + min.toFixed(2) + 'ms</p>' +
+                '<p><strong>Максимум:</strong> ' + max.toFixed(2) + 'ms</p>' +
+                '<p class="hint">Кэшированный контент доставляется из ближайшего Edge-сервера</p>' +
+                '</div>';
+        }
+
+        // Тест динамического API
+        async function testDynamicAPI() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="loading">Тестирование динамического API...</p>';
+            
+            const iterations = 10;
+            const times = [];
+            
+            // Используем публичный API для теста
+            const apiUrl = 'https://api.github.com/zen';
+            
+            for (let i = 0; i < iterations; i++) {
+                const start = performance.now();
+                try {
+                    await fetch(apiUrl);
+                    const duration = performance.now() - start;
+                    times.push(duration);
+                } catch (e) {
+                    console.error('API Error:', e);
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const avg = times.reduce((a, b) => a + b) / times.length;
+            const min = Math.min(...times);
+            const max = Math.max(...times);
+            
+            results.innerHTML = '<div class="result-success">' +
+                '<h3>Динамический API</h3>' +
+                '<p><strong>Запросов:</strong> ' + iterations + '</p>' +
+                '<p><strong>Среднее время:</strong> ' + avg.toFixed(2) + 'ms</p>' +
+                '<p><strong>Минимум:</strong> ' + min.toFixed(2) + 'ms</p>' +
+                '<p><strong>Максимум:</strong> ' + max.toFixed(2) + 'ms</p>' +
+                '<p class="hint">Динамический контент НЕ кэшируется, каждый раз новый запрос</p>' +
+                '</div>';
+        }
+
+        // Сравнение производительности
+        async function comparePerformance() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="loading">⏳ Выполняется комплексное тестирование...</p>';
+            
+            // Тест статики
+            const staticTimes = [];
+            for (let i = 0; i < 10; i++) {
+                const start = performance.now();
+                await fetch('style.css', { cache: 'reload' });
+                staticTimes.push(performance.now() - start);
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Тест API
+            const apiTimes = [];
+            for (let i = 0; i < 10; i++) {
+                const start = performance.now();
+                try {
+                    await fetch('https://api.github.com/zen');
+                    apiTimes.push(performance.now() - start);
+                } catch (e) {
+                    console.error(e);
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const staticAvg = staticTimes.reduce((a, b) => a + b) / staticTimes.length;
+            const apiAvg = apiTimes.reduce((a, b) => a + b) / apiTimes.length;
+            const improvement = ((apiAvg - staticAvg) / apiAvg * 100).toFixed(1);
+            
+            results.innerHTML = '<div class="result-success">' +
+                '<h3>Сравнительный анализ</h3>' +
+                '<table style="width:100%; margin-top:15px;">' +
+                '<tr><th>Тип контента</th><th>Среднее время</th><th>Кэширование</th></tr>' +
+                '<tr><td><strong>Статический (CDN)</strong></td><td>' + staticAvg.toFixed(2) + 'ms</td><td>Да</td></tr>' +
+                '<tr><td><strong>Динамический (API)</strong></td><td>' + apiAvg.toFixed(2) + 'ms</td><td>Нет</td></tr>' +
+                '</table>' +
+                '<p style="margin-top:20px;"><strong>Ускорение за счёт CDN: ' + improvement + '%</strong></p>' +
+                '<p class="hint">CDN значительно ускоряет доставку статического контента благодаря кэшированию</p>' +
+                '</div>';
+        }
+    </script>
+</body>
+</html>
